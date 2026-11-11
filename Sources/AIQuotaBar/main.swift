@@ -37,13 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         store = QuotaStore(demo: CommandLine.arguments.contains("--demo"))
-        statusItem = NSStatusBar.system.statusItem(withLength: 43)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            button.title = "AI"
-            button.font = .systemFont(ofSize: 11, weight: .bold)
-            button.image = NSImage(systemSymbolName: "chart.bar.fill", accessibilityDescription: "AI 额度栏")
-            button.image?.size = NSSize(width: 13, height: 13)
-            button.imagePosition = .imageLeading
+            button.image = statusImage()
+            button.imagePosition = .imageOnly
             button.target = self; button.action = #selector(togglePanel)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
             button.toolTip = "AI 额度栏 · 悬停查看所有额度"
@@ -142,9 +139,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     private func hidePanel() { openWork?.cancel(); closeWork?.cancel(); store.isPinned = false; panel.orderOut(nil) }
     private func updateStatus() {
-        statusItem.button?.contentTintColor = store.lowCount > 0 ? .systemOrange : nil
+        statusItem.button?.image = statusImage()
         statusItem.button?.toolTip = "AI 额度栏 · \(store.connectedCount)/4 已连接\(store.lowCount > 0 ? " · 额度偏低" : "")"
     }
+    /// Four small meters, one per provider in panel order, each filled to its tightest remaining window.
+    /// A provider without a reading shows an empty track; under 20% turns orange, under 10% red.
+    private func statusImage() -> NSImage {
+        let now = Date()
+        let levels: [Double?] = Provider.allCases.map { provider in
+            store.states[provider]?.snapshot?.windows.filter { !$0.needsResetConfirmation(at: now) }.map(\.remaining).min()
+        }
+        let image = NSImage(size: NSSize(width: 19, height: 16), flipped: false) { _ in
+            for (index, level) in levels.enumerated() {
+                let x = CGFloat(index) * 5 + 0.25
+                NSColor.labelColor.withAlphaComponent(0.25).setFill()
+                NSBezierPath(roundedRect: NSRect(x: x, y: 1.5, width: 3.5, height: 13), xRadius: 1.75, yRadius: 1.75).fill()
+                guard let level else { continue }
+                (level < 10 ? NSColor.systemRed : level < 20 ? NSColor.systemOrange : NSColor.labelColor).setFill()
+                let height = max(3.5, 13 * CGFloat(level) / 100)
+                NSBezierPath(roundedRect: NSRect(x: x, y: 1.5, width: 3.5, height: height), xRadius: 1.75, yRadius: 1.75).fill()
+            }
+            return true
+        }
+        image.accessibilityDescription = "AI 额度栏"
+        return image
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         if let localMonitor { NSEvent.removeMonitor(localMonitor) }
         if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }
