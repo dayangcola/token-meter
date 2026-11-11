@@ -36,9 +36,16 @@ public struct QuotaWindow: Identifiable, Sendable {
     public let label: String
     public let usedPercent: Double
     public let resetsAt: Date?
+    public let isWeekly: Bool
     public var remaining: Double { 100 - usedPercent }
-    public init(id: String, label: String, usedPercent: Double, resetsAt: Date?) {
-        self.id = id; self.label = label; self.usedPercent = usedPercent; self.resetsAt = resetsAt
+    public init(id: String, label: String, usedPercent: Double, resetsAt: Date?, isWeekly: Bool = false) {
+        self.id = id; self.label = label; self.usedPercent = usedPercent; self.resetsAt = resetsAt; self.isWeekly = isWeekly
+    }
+    /// A weekly window that refills within 48 hours: the reset time is worth noticing.
+    public func weeklyResetIsNear(at now: Date) -> Bool {
+        guard isWeekly, let resetsAt else { return false }
+        let left = resetsAt.timeIntervalSince(now)
+        return left > 0 && left < 48 * 3600
     }
     public func needsResetConfirmation(at now: Date) -> Bool { resetsAt.map { $0 <= now } ?? false }
 }
@@ -115,7 +122,7 @@ public enum QuotaParser {
             if let title = raw["title"] as? String ?? raw["label"] as? String {
                 var pool = title
                 for suffix in [" 5-hour", " weekly", " monthly", " daily", " only"] where pool.lowercased().hasSuffix(suffix) { pool = String(pool.dropLast(suffix.count)) }
-                if !pool.isEmpty, !window.label.contains(pool) { window = QuotaWindow(id: window.id, label: "\(String(pool.prefix(32))) · \(window.label)", usedPercent: window.usedPercent, resetsAt: window.resetsAt) }
+                if !pool.isEmpty, !window.label.contains(pool) { window = QuotaWindow(id: window.id, label: "\(String(pool.prefix(32))) · \(window.label)", usedPercent: window.usedPercent, resetsAt: window.resetsAt, isWeekly: window.isWeekly) }
             }
             windows.append(window)
         }
@@ -145,7 +152,7 @@ public enum QuotaParser {
             else { title = label ?? "当前额度" }
         } else if let label, !label.isEmpty { title = translated(label) }
         else { title = id == "secondary" ? "第二额度窗口" : "当前额度" }
-        return QuotaWindow(id: id, label: title, usedPercent: used, resetsAt: date(raw["resetsAt"]))
+        return QuotaWindow(id: id, label: title, usedPercent: used, resetsAt: date(raw["resetsAt"]), isWeekly: minutes == 10080)
     }
 
     private static func translated(_ label: String) -> String {

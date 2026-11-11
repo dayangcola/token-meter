@@ -181,7 +181,7 @@ final class QuotaStore: ObservableObject {
         let now = Date()
         for (provider, values) in zip(Provider.allCases, [[32.0, 47.0], [86, 62], [15], [42, 23]]) {
             let windows = values.enumerated().map { i, used in
-                QuotaWindow(id: "\(i)", label: provider == .grok || i == 1 ? "每周" : "5 小时", usedPercent: used, resetsAt: now.addingTimeInterval(i == 1 || provider == .grok ? 180000 : 7200))
+                QuotaWindow(id: "\(i)", label: provider == .grok || i == 1 ? "每周" : "5 小时", usedPercent: used, resetsAt: now.addingTimeInterval(provider == .grok ? 90000 : i == 1 ? 400000 : 7200), isWeekly: provider == .grok || i == 1)
             }
             states[provider] = ProviderState(snapshot: QuotaSnapshot(windows: windows, measuredAt: now, source: provider.source, plan: provider == .codex ? "Pro" : nil, resetCredits: provider == .codex ? 2 : nil), hasAttempted: true)
         }

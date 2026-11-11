@@ -71,6 +71,19 @@ final class QuotaParserTests: XCTestCase {
         XCTAssertEqual(snapshot.windows.map(\.remaining), [60, 20])
     }
 
+    func testWeeklyResetWithin48HoursIsFlagged() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        func window(minutes: Int, hours: Double) throws -> QuotaWindow {
+            let reset = ISO8601DateFormatter().string(from: now.addingTimeInterval(hours * 3600))
+            let data = Data("{\"provider\":\"grok\",\"usage\":{\"primary\":{\"usedPercent\":5,\"windowMinutes\":\(minutes),\"resetsAt\":\"\(reset)\"}}}".utf8)
+            return try QuotaParser.parse(data, for: .grok, now: now).windows[0]
+        }
+        XCTAssertTrue(try window(minutes: 10080, hours: 47).weeklyResetIsNear(at: now))
+        XCTAssertFalse(try window(minutes: 10080, hours: 49).weeklyResetIsNear(at: now))
+        XCTAssertFalse(try window(minutes: 10080, hours: -1).weeklyResetIsNear(at: now))
+        XCTAssertFalse(try window(minutes: 300, hours: 2).weeklyResetIsNear(at: now))
+    }
+
     func testExpiredResetDoesNotInventFreshQuota() {
         let now = Date()
         let window = QuotaWindow(id: "x", label: "每周", usedPercent: 85, resetsAt: now.addingTimeInterval(-10))

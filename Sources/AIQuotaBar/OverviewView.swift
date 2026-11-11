@@ -147,12 +147,17 @@ struct WindowRow: View {
             VStack(spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(window.label).font(.system(size: 12)).foregroundStyle(.white.opacity(0.62)).lineLimit(1)
+                    let near = !pending && window.weeklyResetIsNear(at: context.date)
                     Group {
                         if pending { Text("等待重置确认").foregroundStyle(.orange) }
                         else if let reset = window.resetsAt {
                             Text(countdown(reset, now: context.date)).help(reset.formatted(date: .complete, time: .shortened))
                         }
-                    }.font(.system(size: 11)).foregroundStyle(.white.opacity(0.3)).lineLimit(1)
+                    }
+                    .font(.system(size: 11, weight: near ? .semibold : .regular))
+                    .foregroundStyle(near ? Color.yellow : .white.opacity(0.3)).lineLimit(1)
+                    .padding(.horizontal, near ? 5 : 0).padding(.vertical, near ? 1 : 0)
+                    .background(near ? Color.yellow.opacity(0.14) : .clear, in: Capsule())
                     Spacer(minLength: 4)
                     if !pending {
                         Text("\(stale ? "上次 " : "")\(Int(window.remaining.rounded()))%")
