@@ -1,8 +1,12 @@
 # token-meter（AI 额度栏）
 
-macOS 菜单栏小工具：一个面板看完 Codex、Claude、Grok、Gemini 四家订阅还剩多少额度、什么时候重置。
+[![test](https://github.com/dayangcola/token-meter/actions/workflows/test.yml/badge.svg)](https://github.com/dayangcola/token-meter/actions/workflows/test.yml)
+
+macOS 菜单栏小工具：一个面板看完 Codex、Claude、Grok、Gemini 四家订阅还剩多少额度、什么时候重置。中文、紧凑、只读本机 CLI 的登录。
 
 [English](#english)
+
+<img src="docs/screenshot.png" width="361" alt="AI 额度栏面板：四家的剩余额度与重置时间">
 
 ## 它是什么，不是什么
 
@@ -73,6 +77,15 @@ open 'dist/AI 额度栏.app' --args --demo --show
 - `Sources/AIQuotaBar`：菜单栏、面板、定时刷新、调用命令行程序。
 - `Tests/QuotaCoreTests`：用真实返回的结构做解析测试，包括未知值、越界值和时间边界。
 
+## 维护与反馈
+
+个人项目，作者自己每天在用，按自己的需要更新，不保证响应时间。
+
+- 问题和建议请提 issue，先看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+- 安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
+- 提交任何内容时都不要粘贴令牌、cookie 或带账号邮箱的原始输出。
+- 更新记录见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 许可
 
 MIT，见 [LICENSE](LICENSE)。CodexBar 版权归其作者所有，同为 MIT。
@@ -103,5 +116,9 @@ open 'dist/AI 额度栏.app'
 ```
 
 The repository contains no binaries. The built app is ad-hoc signed and not notarized, so only source is provided.
+
+**Reading the panel.** Numbers are the percentage *remaining*; under 20% turns orange, under 10% red. A weekly window that resets within 48 hours gets its reset time highlighted in yellow. The menu bar icon is four tiny horizontal meters (Codex, Claude, Grok, Gemini from top to bottom), each showing that provider's tightest window.
+
+**Maintenance.** A personal project, updated as the author needs. Issues and PRs are welcome on a best-effort basis; see [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Never paste tokens or raw output with account emails.
 
 **License.** MIT. CodexBar is copyright its authors, also MIT.
