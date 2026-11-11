@@ -142,22 +142,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.image = statusImage()
         statusItem.button?.toolTip = "AI 额度栏 · \(store.connectedCount)/4 已连接\(store.lowCount > 0 ? " · 额度偏低" : "")"
     }
-    /// Four small meters, one per provider in panel order, each filled to its tightest remaining window.
-    /// A provider without a reading shows an empty track; under 20% turns orange, under 10% red.
+    /// The panel in miniature: four horizontal meters, top to bottom in panel order, each filled to that
+    /// provider's tightest remaining window. No reading shows an empty track; under 20% orange, under 10% red.
     private func statusImage() -> NSImage {
         let now = Date()
         let levels: [Double?] = Provider.allCases.map { provider in
             store.states[provider]?.snapshot?.windows.filter { !$0.needsResetConfirmation(at: now) }.map(\.remaining).min()
         }
-        let image = NSImage(size: NSSize(width: 19, height: 16), flipped: false) { _ in
+        let image = NSImage(size: NSSize(width: 18, height: 16), flipped: false) { _ in
             for (index, level) in levels.enumerated() {
-                let x = CGFloat(index) * 5 + 0.25
+                let y = 12.25 - CGFloat(index) * 3.75
                 NSColor.labelColor.withAlphaComponent(0.25).setFill()
-                NSBezierPath(roundedRect: NSRect(x: x, y: 1.5, width: 3.5, height: 13), xRadius: 1.75, yRadius: 1.75).fill()
+                NSBezierPath(roundedRect: NSRect(x: 0.5, y: y, width: 17, height: 2.5), xRadius: 1.25, yRadius: 1.25).fill()
                 guard let level else { continue }
                 (level < 10 ? NSColor.systemRed : level < 20 ? NSColor.systemOrange : NSColor.labelColor).setFill()
-                let height = max(3.5, 13 * CGFloat(level) / 100)
-                NSBezierPath(roundedRect: NSRect(x: x, y: 1.5, width: 3.5, height: height), xRadius: 1.75, yRadius: 1.75).fill()
+                let width = max(2.5, 17 * CGFloat(level) / 100)
+                NSBezierPath(roundedRect: NSRect(x: 0.5, y: y, width: width, height: 2.5), xRadius: 1.25, yRadius: 1.25).fill()
             }
             return true
         }
